@@ -1,0 +1,37 @@
+
+services:
+  backend:
+    profiles:
+      - production
+    build:
+      context: ./backend
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=myresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=8080"
+  backend_local:
+    profiles:
+      - local
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+  traefik:
+    image: "traefik:v3.1"
+    container_name: "traefik"
+    profiles:
+    - production
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entryPoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/var/lib/temp/letsencrypt:/letsencrypt"

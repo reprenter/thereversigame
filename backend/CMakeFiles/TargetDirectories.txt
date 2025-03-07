@@ -1,0 +1,3 @@
+/home/repa/code_vault/cpp-react-template/backend/CMakeFiles/backend.dir
+/home/repa/code_vault/cpp-react-template/backend/CMakeFiles/edit_cache.dir
+/home/repa/code_vault/cpp-react-template/backend/CMakeFiles/rebuild_cache.dir

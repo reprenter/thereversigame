@@ -1,0 +1,32 @@
+h1 {
+  color: var(--primary);
+}
+
+.container {
+  display: block;
+  display: flex;
+  flex-direction: column;
+}
+
+.element {
+  display: flex;
+  color: var(--on-surface);
+  justify-content: space-around;
+}
+
+.fetch {
+  padding-top: 1rem;
+}
+
+button {
+  padding: 0.5rem;
+  background-color: var(--primary-container);
+  border: var(--border-none);
+  color: var(--primary);
+  border-radius: var(--shape-medium);
+  cursor: pointer;
+}
+
+.controls {
+  margin-top: 4rem;
+}
