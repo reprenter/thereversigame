@@ -2,10 +2,24 @@ import './Game.css';
 import { CSSProperties, useState } from 'react';
 
 const Game = () => {
-  const [gridCells, setGridCells] = useState(Array(100).fill(null)); 
+  const initialCells = Array(100).fill(null);
+
+  const setCell = (x: number, y: number, color: string) => {
+    const index = y * 10 + x;
+    initialCells[index] = color;
+  };
+
+  setCell(4, 4, 'red');
+  setCell(5, 5, 'red');
+  setCell(4, 5, 'blue'); 
+  setCell(5, 4, 'blue'); 
+
+  const [gridCells, setGridCells] = useState(initialCells); 
   const [currentPlayer, setCurrentPlayer] = useState('red');
   const [redCount, setRedCount] = useState(0);
   const [blueCount, setBlueCount] = useState(0);
+
+  const isGameOver = () => redCount + blueCount === 100;
 
   const handleCellClick = (index: number) => {
     if (gridCells[index] || isGameOver()) return;
@@ -22,8 +36,6 @@ const Game = () => {
     setGridCells(newCells);
     setCurrentPlayer(currentPlayer === 'red' ? 'blue' : 'red');
   };
-
-  const isGameOver = () => redCount + blueCount === 100;
 
   const containerStyle: CSSProperties = {
     width: '60vw',
