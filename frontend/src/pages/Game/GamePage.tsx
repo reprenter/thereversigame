@@ -144,12 +144,12 @@ const Game = () => {
   }, [board, currentPlayer]);
 
   useEffect(() => {
-    if (gameMode === 'bot-vs-bot' && !gameOver) {
+    if (gameMode === 'bot-vs-bot' && !gameOver && !isReviewMode) {
       makeBotMove();
-    } else if (gameMode === 'bot' && currentPlayer === WHITE && !gameOver) {
+    } else if (gameMode === 'bot' && currentPlayer === WHITE && !gameOver && !isReviewMode) {
       makeBotMove();
     }
-  }, [currentPlayer, gameMode, gameOver]);
+  }, [currentPlayer, gameMode, gameOver, isReviewMode]);
 
   const startNewGame = async () => {
     try {
@@ -199,11 +199,13 @@ const Game = () => {
   const undoMove = () => {
     if (moveHistory.length > 0) {
       setIsReviewMode(true);
-      const newIndex = currentMoveIndex === -1 ? moveHistory.length - 1 : currentMoveIndex - 1;
+      const newIndex = currentMoveIndex === -1 ? moveHistory.length : currentMoveIndex - 1;
       if (newIndex >= -1) {
         setCurrentMoveIndex(newIndex);
         if (newIndex === -1) {
           setBoard(createInitialBoard());
+        } else if (newIndex === moveHistory.length) {
+          setBoard(board);
         } else {
           setBoard(moveHistory[newIndex]);
         }
@@ -378,7 +380,7 @@ const Game = () => {
                   className="undo-btn"
                   disabled={isReviewMode && currentMoveIndex === -1}
                 >
-                  Ход назад
+                  {isReviewMode ? 'Ход назад' : 'Режим просмотра'}
                 </button>
                 {isReviewMode && (
                   <button 
@@ -467,15 +469,7 @@ const Game = () => {
               <p>8. Побеждает игрок, у которого на доске осталось больше фишек своего цвета.</p>
             </div>
             <div className="developer-info">
-              <h3>Разработчик</h3>
-              <p>Игра разработана в рамках учебного проекта.</p>
-              <p>Используемые технологии:</p>
-              <ul>
-                <li>Frontend: React + TypeScript + Vite</li>
-                <li>Backend: C++ + cpp-httplib</li>
-                <li>AI: Alpha-beta pruning</li>
               <p>Copyright © 2025 reprenter. All Rights Reserved.</p>
-              </ul>
             </div>
           </div>
         </div>
