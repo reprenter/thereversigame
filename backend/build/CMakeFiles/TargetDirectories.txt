@@ -1,0 +1,3 @@
+/home/repa/code_vault/thereversigame/backend/build/CMakeFiles/backend.dir
+/home/repa/code_vault/thereversigame/backend/build/CMakeFiles/edit_cache.dir
+/home/repa/code_vault/thereversigame/backend/build/CMakeFiles/rebuild_cache.dir
