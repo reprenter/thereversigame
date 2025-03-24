@@ -199,7 +199,7 @@ const Game = () => {
   const undoMove = () => {
     if (moveHistory.length > 0) {
       setIsReviewMode(true);
-      const newIndex = currentMoveIndex - 1;
+      const newIndex = currentMoveIndex === -1 ? moveHistory.length - 1 : currentMoveIndex - 1;
       if (newIndex >= -1) {
         setCurrentMoveIndex(newIndex);
         if (newIndex === -1) {
@@ -218,6 +218,7 @@ const Game = () => {
       setBoard(moveHistory[newIndex]);
     } else if (currentMoveIndex === moveHistory.length - 1) {
       setIsReviewMode(false);
+      setCurrentMoveIndex(-1);
     }
   };
 
@@ -383,7 +384,7 @@ const Game = () => {
                   <button 
                     onClick={redoMove} 
                     className="redo-btn"
-                    disabled={currentMoveIndex >= moveHistory.length - 1}
+                    disabled={currentMoveIndex > moveHistory.length - 1}
                   >
                     Ход вперед
                   </button>
