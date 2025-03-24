@@ -6,9 +6,11 @@ const EMPTY = 0;
 const BLACK = 1;
 const WHITE = 2;
 
-const API_URL = 'http://localhost:8080';
+const API_URL = import.meta.env.PROD 
+  ? 'https://reversi-backend.onrender.com' // URL вашего бэкенда на Render
+  : 'http://localhost:8080';
 
-type GameMode = 'bot' | 'human';
+type GameMode = 'human' | 'bot' | 'bot-vs-bot';
 type Difficulty = 1 | 2 | 3;
 
 // Направления для проверки ходов
@@ -113,6 +115,11 @@ const Game = () => {
   const [whiteScore, setWhiteScore] = useState(2);
   const [gameOver, setGameOver] = useState(false);
   const [winner, setWinner] = useState<number | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
+  const [moveHistory, setMoveHistory] = useState<number[][][]>([]);
+  const [isBotThinking, setIsBotThinking] = useState(false);
+  const [isReviewMode, setIsReviewMode] = useState(false);
+  const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
 
   useEffect(() => {
     startNewGame();
@@ -139,7 +146,9 @@ const Game = () => {
   }, [board, currentPlayer]);
 
   useEffect(() => {
-    if (gameMode === 'bot' && currentPlayer === WHITE && !gameOver) {
+    if (gameMode === 'bot-vs-bot' && !gameOver) {
+      makeBotMove();
+    } else if (gameMode === 'bot' && currentPlayer === WHITE && !gameOver) {
       makeBotMove();
     }
   }, [currentPlayer, gameMode, gameOver]);
@@ -152,11 +161,17 @@ const Game = () => {
         setCurrentPlayer(BLACK);
         setGameOver(false);
         setWinner(null);
+        setMoveHistory([]);
+        setIsReviewMode(false);
+        setCurrentMoveIndex(-1);
       } else {
         setBoard(createInitialBoard());
         setCurrentPlayer(BLACK);
         setGameOver(false);
         setWinner(null);
+        setMoveHistory([]);
+        setIsReviewMode(false);
+        setCurrentMoveIndex(-1);
       }
     } catch (error) {
       console.error('Error starting new game:', error);
@@ -164,6 +179,9 @@ const Game = () => {
       setCurrentPlayer(BLACK);
       setGameOver(false);
       setWinner(null);
+      setMoveHistory([]);
+      setIsReviewMode(false);
+      setCurrentMoveIndex(-1);
     }
   };
 
@@ -180,7 +198,35 @@ const Game = () => {
     setWhiteScore(white);
   };
 
+  const undoMove = () => {
+    if (moveHistory.length > 0) {
+      setIsReviewMode(true);
+      const newIndex = currentMoveIndex - 1;
+      if (newIndex >= -1) {
+        setCurrentMoveIndex(newIndex);
+        if (newIndex === -1) {
+          setBoard(createInitialBoard());
+        } else {
+          setBoard(moveHistory[newIndex]);
+        }
+      }
+    }
+  };
+
+  const redoMove = () => {
+    if (currentMoveIndex < moveHistory.length - 1) {
+      const newIndex = currentMoveIndex + 1;
+      setCurrentMoveIndex(newIndex);
+      setBoard(moveHistory[newIndex]);
+    } else if (currentMoveIndex === moveHistory.length - 1) {
+      setIsReviewMode(false);
+    }
+  };
+
   const makeBotMove = async () => {
+    setIsBotThinking(true);
+    await new Promise(resolve => setTimeout(resolve, 1000)); // Задержка 1 секунда
+    
     try {
       const response = await axios.post(`${API_URL}/bot-move`, {
         difficulty,
@@ -189,24 +235,27 @@ const Game = () => {
       });
       
       if (response.data.status === 'ok') {
+        setMoveHistory([...moveHistory, board]);
         setBoard(response.data.board);
-        setCurrentPlayer(BLACK);
+        setCurrentPlayer(currentPlayer === BLACK ? WHITE : BLACK);
       }
     } catch (error) {
       console.error('Error making bot move:', error);
-      // В случае ошибки сервера, делаем случайный ход
       const moves = getValidMoves(board, currentPlayer);
       if (moves.length > 0) {
         const [x, y] = moves[Math.floor(Math.random() * moves.length)];
         const newBoard = makeMove(board, x, y, currentPlayer);
+        setMoveHistory([...moveHistory, board]);
         setBoard(newBoard);
-        setCurrentPlayer(BLACK);
+        setCurrentPlayer(currentPlayer === BLACK ? WHITE : BLACK);
       }
+    } finally {
+      setIsBotThinking(false);
     }
   };
 
   const handleCellClick = async (x: number, y: number) => {
-    if (gameOver || (gameMode === 'bot' && currentPlayer === WHITE)) return;
+    if (gameOver || isReviewMode || (gameMode !== 'human' && currentPlayer === WHITE)) return;
     
     if (!validMoves.some(([moveX, moveY]) => moveX === x && moveY === y)) return;
 
@@ -219,13 +268,14 @@ const Game = () => {
       });
 
       if (response.data.status === 'ok') {
+        setMoveHistory([...moveHistory, board]);
         setBoard(response.data.board);
         setCurrentPlayer(currentPlayer === BLACK ? WHITE : BLACK);
       }
     } catch (error) {
       console.error('Error making move:', error);
-      // В случае ошибки сервера, используем локальную логику
       const newBoard = makeMove(board, x, y, currentPlayer);
+      setMoveHistory([...moveHistory, board]);
       setBoard(newBoard);
       setCurrentPlayer(currentPlayer === BLACK ? WHITE : BLACK);
     }
@@ -235,8 +285,30 @@ const Game = () => {
     let className = 'cell';
     if (validMoves.some(([moveX, moveY]) => moveX === x && moveY === y)) {
       className += ' valid-move';
+      // Добавляем класс для выгодных ходов
+      const moveScore = calculateMoveScore(board, x, y, currentPlayer);
+      if (moveScore >= 3) {
+        className += ' good-move';
+      }
     }
     return className;
+  };
+
+  // Функция для расчета выгодности хода
+  const calculateMoveScore = (board: number[][], x: number, y: number, player: number): number => {
+    const newBoard = makeMove(board, x, y, player);
+    let score = 0;
+    
+    // Подсчитываем количество захваченных фишек
+    for (let i = 0; i < 8; i++) {
+      for (let j = 0; j < 8; j++) {
+        if (newBoard[i][j] === player && board[i][j] !== player) {
+          score++;
+        }
+      }
+    }
+    
+    return score;
   };
 
   return (
@@ -262,9 +334,18 @@ const Game = () => {
             >
               Игра с ботом
             </button>
+            <button 
+              onClick={() => {
+                setGameMode('bot-vs-bot');
+                startNewGame();
+              }}
+              className={gameMode === 'bot-vs-bot' ? 'active' : ''}
+            >
+              Бот против бота
+            </button>
           </div>
           
-          {gameMode === 'bot' && (
+          {(gameMode === 'bot' || gameMode === 'bot-vs-bot') && (
             <div className="difficulty-selector">
               <button 
                 onClick={() => setDifficulty(1)}
@@ -287,9 +368,31 @@ const Game = () => {
             </div>
           )}
           
-          <button onClick={startNewGame} className="new-game-btn">
-            Новая игра
-          </button>
+          <div className="game-actions">
+            <button onClick={startNewGame} className="new-game-btn">
+              Новая игра
+            </button>
+            {moveHistory.length > 0 && (
+              <>
+                <button 
+                  onClick={undoMove} 
+                  className="undo-btn"
+                  disabled={isReviewMode && currentMoveIndex === -1}
+                >
+                  Ход назад
+                </button>
+                {isReviewMode && (
+                  <button 
+                    onClick={redoMove} 
+                    className="redo-btn"
+                    disabled={currentMoveIndex >= moveHistory.length - 1}
+                  >
+                    Ход вперед
+                  </button>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         <div className="game-board">
@@ -309,19 +412,32 @@ const Game = () => {
                   )}
                 </div>
               ))}
-            </div>
-          ))}
+          </div>
+        ))}
         </div>
       </div>
 
       <div className="game-info">
+        <button 
+          className="info-button"
+          onClick={() => setShowInfo(true)}
+        >
+          i
+        </button>
+
         <div className="scores">
           <div className="score black">Черные: {blackScore}</div>
           <div className="score white">Белые: {whiteScore}</div>
         </div>
         
         <div className="current-player">
-          Ход: {currentPlayer === BLACK ? 'Черных' : 'Белых'}
+          {isBotThinking ? (
+            <div className="thinking">Бот думает...</div>
+          ) : isReviewMode ? (
+            <div className="review-mode">Режим просмотра</div>
+          ) : (
+            <div>Ход: {currentPlayer === BLACK ? 'Черных' : 'Белых'}</div>
+          )}
         </div>
 
         {gameOver && (
@@ -335,6 +451,36 @@ const Game = () => {
           </div>
         )}
       </div>
+
+      {showInfo && (
+        <div className="modal-overlay" onClick={() => setShowInfo(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <button className="close-button" onClick={() => setShowInfo(false)}>×</button>
+            <h2>Правила игры Реверси</h2>
+            <div className="rules-content">
+              <p>1. Игра начинается с четырёх фишек в центре доски: две белые и две чёрные.</p>
+              <p>2. Игроки ходят по очереди, начиная с чёрных.</p>
+              <p>3. При каждом ходе игрок должен поставить одну фишку своего цвета на пустую клетку доски.</p>
+              <p>4. Ход считается допустимым, если после него хотя бы одна фишка противника будет окружена фишками игрока.</p>
+              <p>5. При ходе все фишки противника, которые оказались между поставленной фишкой и любой фишкой игрока, переворачиваются на другую сторону.</p>
+              <p>6. Если у игрока нет допустимых ходов, он пропускает ход.</p>
+              <p>7. Игра заканчивается, когда ни один из игроков не может сделать ход.</p>
+              <p>8. Побеждает игрок, у которого на доске осталось больше фишек своего цвета.</p>
+            </div>
+            <div className="developer-info">
+              <h3>Разработчик</h3>
+              <p>Игра разработана в рамках учебного проекта.</p>
+              <p>Используемые технологии:</p>
+              <ul>
+                <li>Frontend: React + TypeScript + Vite</li>
+                <li>Backend: C++ + cpp-httplib</li>
+                <li>AI: Alpha-beta pruning</li>
+              <p>Copyright © 2025 reprenter. All Rights Reserved.</p>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

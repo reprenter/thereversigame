@@ -1,38 +1,20 @@
-FROM alpine:3.14
+FROM gcc:latest
 
-RUN apk update \
-  && apk upgrade \
-  && apk add --no-cache \
-    clang \
-    clang-dev \
-    alpine-sdk \
-    dpkg \
-    cmake \
-    ccache \
-    python3
+WORKDIR /app
 
-RUN ln -sf /usr/bin/clang /usr/bin/cc \
-  && ln -sf /usr/bin/clang++ /usr/bin/c++ \
-  && update-alternatives --install /usr/bin/cc cc /usr/bin/clang 10\
-  && update-alternatives --install /usr/bin/c++ c++ /usr/bin/clang++ 10\
-  && update-alternatives --auto cc \
-  && update-alternatives --auto c++ \
-  && update-alternatives --display cc \
-  && update-alternatives --display c++ \
-  && ls -l /usr/bin/cc /usr/bin/c++ \
-  && cc --version \
-  && c++ --version
+# Установка зависимостей
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-WORKDIR ./app
+# Копирование исходного кода
+COPY . .
 
-COPY ./include ./include
-COPY ./lib ./lib
-COPY ./src ./src
-COPY ./CMakeLists.txt ./CMakeLists.txt
+# Компиляция
+RUN g++ -o backend main.cpp -lssl -lcrypto -pthread
 
-WORKDIR ./build
+# Открываем порт
+EXPOSE 8080
 
-RUN cmake ..
-RUN cmake --build .
-
+# Запуск приложения
 CMD ["./backend"]

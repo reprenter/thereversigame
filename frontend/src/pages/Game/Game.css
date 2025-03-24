@@ -147,6 +147,7 @@ button.active {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 20px;
+  margin-top: 60px;
 }
 
 .scores {
@@ -223,4 +224,198 @@ button.active {
 .game-over p {
   margin: 0;
   font-size: 1.2em;
+}
+
+.info-button {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #2196F3;
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.info-button:hover {
+  background-color: #1976D2;
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: slideIn 0.3s ease;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background-color: #f44336;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  padding: 0;
+}
+
+.close-button:hover {
+  background-color: #d32f2f;
+  transform: scale(1.1);
+}
+
+.rules-content {
+  margin: 20px 0;
+  line-height: 1.6;
+}
+
+.rules-content p {
+  margin: 10px 0;
+}
+
+.developer-info {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.developer-info h3 {
+  margin-bottom: 15px;
+  color: #2196F3;
+}
+
+.developer-info ul {
+  margin: 10px 0;
+  padding-left: 20px;
+}
+
+.developer-info li {
+  margin: 5px 0;
+  color: #666;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.game-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.undo-btn,
+.redo-btn {
+  background-color: #FF9800;
+  color: white;
+  font-weight: bold;
+  width: 100%;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.undo-btn:hover:not(:disabled),
+.redo-btn:hover:not(:disabled) {
+  background-color: #F57C00;
+}
+
+.undo-btn:disabled,
+.redo-btn:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.review-mode {
+  color: #FF9800;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+
+.thinking {
+  color: #2196F3;
+  font-weight: bold;
+  animation: pulse 1.5s infinite;
+}
+
+.cell.good-move::after {
+  content: '';
+  position: absolute;
+  width: 20%;
+  height: 20%;
+  background-color: rgba(255, 215, 0, 0.5);
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.3;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
 }
