@@ -7,7 +7,7 @@ const BLACK = 1;
 const WHITE = 2;
 
 const API_URL = import.meta.env.PROD 
-  ? 'https://reversi-backend.onrender.com' // URL вашего бэкенда на Render
+  ? 'https://reversi-backend-bnym.onrender.com' // URL вашего бэкенда на Render
   : 'http://localhost:8080';
 
 type GameMode = 'human' | 'bot' | 'bot-vs-bot';
