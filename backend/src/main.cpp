@@ -129,14 +129,26 @@ int evaluateBoard(const std::vector<std::vector<int>>& board, int player) {
 }
 
 int alphaBeta(std::vector<std::vector<int>>& board, int depth, int alpha, int beta, bool maximizingPlayer, int player) {
+    // Сначала проверяем терминальное состояние
+    std::vector<Move> currentPlayerMoves = getValidMoves(board, player);
+    std::vector<Move> opponentMoves = getValidMoves(board, player == BLACK ? WHITE : BLACK);
+    
+    // Если игра закончена (никто не может ходить), возвращаем финальную оценку
+    if (currentPlayerMoves.empty() && opponentMoves.empty()) {
+        return evaluateBoard(board, player) * 1000; // Умножаем на 1000, так как это терминальное состояние
+    }
+
+    // Если достигли максимальной глубины
     if (depth == 0) {
         return evaluateBoard(board, player);
     }
 
+    // Получаем ходы для текущего игрока
     std::vector<Move> moves = getValidMoves(board, maximizingPlayer ? player : (player == BLACK ? WHITE : BLACK));
     
+    // Если текущий игрок не может ходить, но противник может - пропускаем ход
     if (moves.empty()) {
-        return evaluateBoard(board, player);
+        return alphaBeta(board, depth - 1, alpha, beta, !maximizingPlayer, player);
     }
 
     if (maximizingPlayer) {
@@ -248,10 +260,12 @@ int main() {
                     botMove = getRandomMove(board, player);
                     break;
                 case 2: // Средний (глубина 3)
+                    std::cout << "Making move with depth 3..." << std::endl;
                     botMove = getBestMove(board, 3, player);
                     break;
-                case 3: // Сложный (глубина 5)
-                    botMove = getBestMove(board, 5, player);
+                case 3: // Сложный (глубина 7)
+                    std::cout << "Making move with depth 7..." << std::endl;
+                    botMove = getBestMove(board, 7, player);
                     break;
                 default:
                     botMove = getRandomMove(board, player);
